@@ -1,0 +1,51 @@
+name: Test Create PR in codefresh-set repo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-pr-other-repo:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout this repo
+      uses: actions/checkout@v4
+
+    - name: Clone target repo (Repo B - codefresh-set)
+      run: |
+        git clone https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/Harithasridhar1306/codefresh-set.git
+        cd codefresh-set
+        git checkout -b add-workflow-from-repoA
+
+    - name: Add workflow file to target repo
+      run: |
+        cd codefresh-set
+        mkdir -p .github/workflows
+        echo "# Dummy workflow" > .github/workflows/dummy.yml
+
+    - name: Configure Git
+      run: |
+        cd codefresh-set
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Commit changes
+      run: |
+        cd codefresh-set
+        git add .github/workflows/dummy.yml
+        git commit -m "Add dummy workflow file from automation"
+
+    - name: Push branch
+      run: |
+        cd codefresh-set
+        git push origin add-workflow-from-repoA
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v6
+      with:
+        token: ${{ secrets.PAT_TOKEN }}
+        repository: Harithasridhar1306/codefresh-set
+        title: "Automated PR to add dummy workflow"
+        body: "This PR was created automatically from Repo A."
+        head: add-workflow-from-repoA
+        base: main
